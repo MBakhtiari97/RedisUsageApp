@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Service.LogServices;
 using Service.UserServices;
+using StackExchange.Redis;
 
 namespace Web;
 
@@ -25,10 +26,14 @@ public class Program
         builder.Configuration.AddUserSecrets(userSecretId);
 
         var masterConnectionString = builder.Configuration.GetConnectionString("MasterConnection");
+        var redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
 
         builder.Services.AddDbContext<MasterDbContext>(options =>
                                                          options.UseSqlServer(masterConnectionString)
                                                          .EnableSensitiveDataLogging());
+
+        builder.Services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect(redisConnection!));
     }
 
     private static void RegisterServices(WebApplicationBuilder builder)
