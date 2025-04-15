@@ -1,7 +1,7 @@
 using DataLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
-using Service.LogServices;
+using Service.OrderServices;
 using Service.UserServices;
 using StackExchange.Redis;
 
@@ -39,7 +39,7 @@ public class Program
     private static void RegisterServices(WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IUserServices, UserServices>();
-        builder.Services.AddScoped<ILogServices, LogServices>();
+        builder.Services.AddScoped<IOrderServices, OrderServices>();
     }
 
     public static void Main(string[] args)

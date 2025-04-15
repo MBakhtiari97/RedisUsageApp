@@ -3,7 +3,7 @@ using DataLayer;
 using StackExchange.Redis;
 using System.Text.Json;
 
-namespace Service.UserServices;
+namespace Service.OrderServices;
 
 public interface IOrderServices
 {
