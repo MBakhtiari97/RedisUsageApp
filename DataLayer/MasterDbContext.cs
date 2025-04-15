@@ -10,8 +10,8 @@ public class MasterDbContext : DbContext
     {
     }
 
-    public DbSet<AppUser> AppUser { get; set; }
-    public DbSet<SystemLog> SystemLog { get; set; }
+    public DbSet<Order> Order { get; set; }
+    public DbSet<OrderItem> OrderItem { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
