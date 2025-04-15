@@ -27,21 +27,21 @@ public class OrderController : ControllerBase
         }
         catch (Exception ex)
         {
-            throw new Exception(ex.Message);
+            throw;
         }
     }
 
     [HttpPost]
-    public async Task<IActionResult> SaveOrder(Core.Order order, List<OrderItem> orderItems)
+    public async Task<IActionResult> SaveOrder(AddOrderDTO addOrder)
     {
         try
         {
-            var result = await _orderServices.SaveTempOrderAsync(order, orderItems);
+            var result = await _orderServices.SaveTempOrderAsync(addOrder.Order, addOrder.OrderItems);
             return Ok(result);
         }
         catch (Exception ex)
         {
-            throw new Exception(ex.Message);
+            throw;
         }
     }
 }

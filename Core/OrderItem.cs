@@ -17,7 +17,7 @@ public class OrderItem
     #region Navigation Properties
 
     [JsonIgnore]
-    public Order Order { get; set; }
+    public Order? Order { get; set; }
 
     #endregion
 }
