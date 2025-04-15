@@ -44,4 +44,18 @@ public class OrderController : ControllerBase
             throw;
         }
     }
+
+    [HttpPatch()]
+    public async Task<IActionResult> TransferTemporaryOrders()
+    {
+        try
+        {
+            var result = await _orderServices.TransferTempOrdersToDatabaseAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+    }
 }

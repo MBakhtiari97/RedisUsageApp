@@ -8,7 +8,9 @@ namespace Service.OrderServices;
 public interface IOrderServices
 {
     Task<long> SaveTempOrderAsync(Core.Order order, List<OrderItem> orderItems);
+    Task<List<long>> TransferTempOrdersToDatabaseAsync();
     Task<Core.Order> ReadTempOrder(int orderId);
+    Task<List<AddOrderDTO>> ReadTempOrdersAsync();
 }
 
 public class OrderServices : IOrderServices
@@ -47,6 +49,37 @@ public class OrderServices : IOrderServices
         return order;
     }
 
+    public async Task<List<AddOrderDTO>> ReadTempOrdersAsync()
+    {
+        var tempOrders = new List<AddOrderDTO>();
+
+        // Use SCAN to find all keys matching the prefix
+        var cursor = 0;
+        do
+        {
+            var result = await _redisDb.ExecuteAsync("SCAN", cursor, "MATCH", "tempOrder:*", "COUNT", 10000);
+            var scannedData = (RedisResult[])result!;
+
+            cursor = (int)scannedData[0]; // Update the cursor
+            var keys = (RedisResult[])scannedData[1]!;
+
+            // Fetch the data for each matching key
+            foreach (var key in keys)
+            {
+                var cachedValue = await _redisDb.StringGetAsync((string)key!);
+                if (!string.IsNullOrEmpty(cachedValue))
+                {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var tempOrder = JsonSerializer.Deserialize<AddOrderDTO>(cachedValue!, options);
+                    if (tempOrder != null)
+                        tempOrders.Add(tempOrder);
+                }
+            }
+        }
+        while (cursor != 0);
+        return tempOrders;
+    }
+
     public async Task<long> SaveTempOrderAsync(Core.Order order, List<OrderItem> orderItems)
     {
         var id = await _redisDb.StringIncrementAsync("OrderIdCounter");
@@ -65,5 +98,23 @@ public class OrderServices : IOrderServices
         // Save the JSON data in Redis
         var isSaved = await _redisDb.StringSetAsync(cacheKey, cacheValue, TimeSpan.FromHours(1)); // Expire in 1 hour
         return order.OrderId; // Return whether the operation succeeded
+    }
+
+    public async Task<List<long>> TransferTempOrdersToDatabaseAsync()
+    {
+        var orders = await ReadTempOrdersAsync();
+        orders.ForEach(o =>
+        {
+            o.Order.OrderItems = o.OrderItems;
+            o.Order.OrderId = default;
+            o.OrderItems.ForEach(i =>
+            {
+                i.OrderId = default;
+                i.OrderItemId = default;
+            });
+        });
+        await _masterContext.Order.AddRangeAsync(orders.Select(o => o.Order));
+        await _masterContext.SaveChangesAsync();
+        return orders.Select(o => o.Order.OrderId).ToList();
     }
 }
